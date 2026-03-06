@@ -130,12 +130,12 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    let mut model = vars.minimise(objective);
+    let mut model = vars.minimise(objective).using(good_lp::microlp);
     for c in constraints {
         model = model.with(c);
     }
 
-    if let Ok(solution) = model.using(good_lp::microlp).solve() {
+    if let Ok(solution) = model.solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
