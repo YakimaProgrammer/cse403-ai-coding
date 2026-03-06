@@ -106,28 +106,38 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
         }
     }
 
-    // Teammate Penalties
+    // Teammate Requirements
     let netid_to_idx: HashMap<String, usize> = students.iter().enumerate()
         .map(|(i, s)| (s.netid.clone(), i))
         .collect();
 
     for (s_idx, student) in students.iter().enumerate() {
-        for t_netid in &student.teammates {
-            if let Some(&t_idx) = netid_to_idx.get(t_netid) {
-                if s_idx < t_idx {
-                    for p in 0..num_projects {
-                        // Optimization: Instead of 2 constraints and a new variable per project,
-                        // we use the fact that these are binary variables.
-                        // Penalty applies if x[s][p] != x[t][p]
-                        let z = vars.add(variable().binary());
-                        constraints.push(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
-                        constraints.push(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
-                        
-                        objective += z * (config.teammate_penalty / 2.0);
-                    }
-                }
+        let valid_teammate_indices: Vec<usize> = student.teammates.iter()
+            .filter_map(|id| netid_to_idx.get(id).copied())
+            .filter(|&t_idx| t_idx != s_idx)
+            .collect();
+
+        if !valid_teammate_indices.is_empty() {
+            for p in 0..num_projects {
+                // To satisfy "at least one preferred teammate", we create a variable z
+                // that is true if student s is with at least one teammate t on project p.
+                // However, the spec is simpler: if s is on p, then at least one t must be on p.
+                // sum(x[t][p] for t in teammates) >= x[s][p]
+                let teammate_sum: Expression = valid_teammate_indices.iter()
+                    .map(|&t_idx| Expression::from(x[t_idx][p]))
+                    .sum();
+                constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
             }
         }
+    }
+
+    // Team size preference: Prefer 6 over 5 or 4.
+    for p in 0..num_projects {
+        let is_size_6 = vars.add(variable().binary());
+        let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
+        // is_size_6 can only be 1 if col_sum is 6
+        constraints.push(constraint!(col_sum >= 6.0 * is_size_6));
+        objective -= is_size_6 * 1.0; // Small incentive for size 6
     }
 
     // 5. Solve and Format
