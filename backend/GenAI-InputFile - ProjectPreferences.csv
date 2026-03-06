@@ -1,0 +1,73 @@
+Name,NetID,Project Pitched,First (1) Choice,Second (2)  Choice,Third (3) Choice,Fourth (4) Choice,Fifth (5) Choice,Team Member #1 UW NetID,Team Member #2 UW NetID,Team Member #3 UW NetID
+Student 1,student1,Project 1,Project 1,Project 2,Project 3,Project 4,Project 5,student2,,
+Student 2,student2,Project 1,Project 1,Project 6,Project 7,Project 3,Project 8,student1,,
+Student 3,student3,Project 10,Project 1,Project 9,Project 10,Project 8,Project 11,student3,,
+Student 4,student4,Project 14,Project 14,Project 13,Project 2,Project 4,Project 12,student4,,
+Student 5,student5,Project 14,Project 14,Project 13,Project 2,Project 4,Project 12,student4,,
+Student 6,student6,Project 24,Project 24,Project 23,Project 10,Project 20,Project 11,student5,,
+Student 7,student7,,Project 23,Project 28,Project 4,Project 18,Project 14,student7,,
+Student 8,student8,Project 23,Project 23,Project 24,Project 12,Project 10,Project 13,student9,student8,
+Student 9,student9,Project 23,Project 23,Project 24,Project 12,Project 10,Project 13,student9,student8,
+Student 10,student10,Project 20,Project 23,Project 20,Project 19,Project 13,Project 28,aidanyu,,
+Student 11,student11,Project 19,Project 19,Project 6,Project 9,Project 8,Project 13,student11,student12,student13
+Student 12,student12,Project 19,Project 19,Project 6,Project 9,Project 8,Project 13,student13,student11,student12
+Student 13,student13,Project 19,Project 19,Project 6,Project 9,Project 8,Project 13,student11,student13,student12
+Student 14,student14,Project 25,Project 10,Project 18,Project 8,Project 19,Project 11,student14,,
+Student 15,student15,Project 22,Project 10,Project 15,Project 23,Project 7,Project 22,student15,,
+Student 16,student16,Project 31,Project 10,Project 24,Project 31,Project 20,Project 16,student16,,
+Student 17,student17,Project 10,Project 10,Project 26,Project 31,Project 15,Project 27,student17,student3,
+Student 18,student18,Project 26,Project 26,Project 14,Project 6,Project 9,Project 20,student18,student19,
+Student 19,student19,Project 26,Project 26,Project 10,Project 12,Project 8,Project 3,student19,student18,student35
+Student 20,student20,Project 2,Project 26,Project 17,Project 8,Project 18,Project 2,student20,,
+Student 21,student21,Project 28,Project 28,Project 23,Project 20,Project 13,Project 30,student21,,
+Student 22,student22,Project 22,Project 15,Project 11,Project 22,EasyBook,Project 31,student22,,
+Student 23,student23,Project 25,Project 16,Project 6,Project 1,Project 3,Project 2,student23,,
+Student 24,student24,Project 8,Project 16,Project 17,Project 24,Project 15,Project 18,student63,,
+Student 25,student25,Project 32,EasyBook,Project 4,Project 11,Project 22,Project 15,student25,,
+Student 26,student26,Project 32,EasyBook,Project 18,Project 4,Project 15,Project 31,student26,,
+Student 27,student27,Project 5,Project 5,Project 6,Project 30,Project 9,Project 1,student28,,
+Student 28,student28,Project 5,Project 5,Project 18,Project 19,Project 28,Project 30,student27,,
+Student 29,student29,Project 4,Project 5,Project 18,Project 2,Project 4,Project 25,student29,,
+Student 30,student30,Project 4,Project 4,Project 17,Project 8,Project 10,Project 16,student30,,
+Student 31,student31,Project 11,Project 11,Project 26,Project 13,Project 22,Project 1,student31,,
+Student 32,student32,Project 21,Project 30,Project 9,Project 18,Project 17,Project 5,student32,student33,student53
+Student 33,student33,Project 30,Project 30,Project 9,Project 18,Project 17,Project 5,student33,student32,student53
+Student 34,student34,Project 27,Project 27,Project 15,Project 22,Project 26,Project 21,student34,,
+Student 35,student35,Project 12,Project 12,Project 26,Project 11,Project 6,Project 2,student35,student37,student36
+Student 36,student36,Project 12,Project 12,Project 26,Project 11,Project 6,Project 2,student36,student37,student35
+Student 37,student37,Project 12,Project 12,Project 26,Project 11,Project 6,Project 2,student35,student36,student37
+Student 38,student38,Project 32,Project 3,Project 8,Project 2,Project 13,Project 18,student38,student72,
+Student 39,student39,Project 3,Project 3,Project 2,Project 1,Project 11,Project 13,student39,student41,student40
+Student 40,student40,Project 3,Project 3,Project 2,Project 1,Project 11,Project 13,student39,student41,student40
+Student 41,student41,Project 3,Project 3,Project 2,Project 1,Project 11,Project 13,student39,student41,student40
+Student 42,student42,Project 2,Project 3,Project 17,Project 2,Project 8,Project 9,student42,student72,student20
+Student 43,student43,Project 7,Project 18,Project 4,Project 1,Project 28,Project 6,student43,student45,student44
+Student 44,student44,Project 18,Project 18,Project 4,Project 1,Project 28,Project 6,student43,student45,student44
+Student 45,student45,Project 18,Project 18,Project 4,Project 1,Project 28,Project 6,student43,student45,student44
+Student 46,student46,Project 27,Project 18,Project 3,Project 27,Project 1,Project 4,student46,student72,
+Student 47,student47,Project 31,Project 22,Project 6,Project 11,Project 2,Project 30,student47,,
+Student 48,student48,Project 8,Project 8,Project 11,Project 17,Project 18,Project 7,student48,,
+Student 49,student49,Project 11,Project 7,Project 11,Project 28,Project 25,Project 16,student49,,
+Student 50,student50,Project 7,Project 7,Project 16,Project 1,Project 14,Project 18,student50,student43,
+Student 51,student51,Project 9,Project 9,Project 6,Project 4,Project 2,Project 20,student51,student52,
+Student 52,student52,Project 9,Project 9,Project 6,Project 4,Project 2,Project 20,student51,student52,
+Student 53,student53,Project 21,Project 21,Project 9,Project 7,Project 17,Project 7,student32,student33,
+Student 54,student54,Project 22,Project 21,Project 22,Project 10,Project 13,Project 4,student54,,
+Student 55,student55,Project 8,Project 20,Project 13,Project 18,Project 5,Project 11,student55,,
+Student 56,student56,Project 20,Project 20,Project 24,Project 25,Project 23,Project 17,student56,,
+Student 57,student57,Project 29,Project 20,Project 1,Project 29,Project 9,Project 15,student57,,
+Student 58,student58,Project 29,Project 29,Project 2,Project 13,Project 6,Project 7,student57,,
+Student 59,student59,Project 28,Project 13,Project 2,Project 9,Project 12,Project 19,student59,,
+Student 60,student60,Project 15,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student64,student63
+Student 61,student61,Project 13,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student62,student65
+Student 62,student62,Project 13,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student62,student65
+Student 63,student63,Project 16,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student62,student65
+Student 64,student64,Project 16,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student62,student65
+Student 65,student65,Project 15,Project 13,Project 15,Project 16,Project 4,Project 18,student61,student62,student65
+Student 66,student66,Project 6,Project 6,Project 3,Project 24,Project 13,Project 4,student67,student68,student66
+Student 67,student67,Project 6,Project 6,Project 9,Project 20,Project 3,Project 13,student67,student68,student66
+Student 68,student68,Project 6,Project 6,Project 3,Project 11,Project 27,Project 4,student67,student68,student66
+Student 69,student69,Project 11,Project 6,Project 26,Project 11,Project 7,Project 4,student69,student49,student31
+Student 70,student70,Project 17,Project 17,Project 14,Project 18,Project 16,Project 26,student70,student71,
+Student 71,student71,Project 17,Project 17,Project 18,Project 19,Project 5,Project 9,student70,,
+Student 72,student72,Project 2,,,,,,,,
