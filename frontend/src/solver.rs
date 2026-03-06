@@ -68,27 +68,27 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     // y[p]: project p is active
     let y: Vec<_> = (0..num_projects).map(|_| vars.add(variable().binary())).collect();
 
-    // 3. Constraints & Model Initialization
-    let mut model = vars.minimise(Expression::from(0.0));
+    // 3. Constraints
+    let mut constraints = Vec::new();
 
     // Each student assigned to exactly one project
     for s in 0..num_students {
         let row_sum: Expression = x[s].iter().map(|&v| Expression::from(v)).sum();
-        model = model.with(constraint!(row_sum == 1.0));
+        constraints.push(constraint!(row_sum == 1.0));
     }
 
     // Team Size Constraints
     for p in 0..num_projects {
         let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
-        model = model.with(constraint!(col_sum <= (config.max_team_size as f64) * y[p]));
-        model = model.with(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
+        constraints.push(constraint!(col_sum <= (config.max_team_size as f64) * y[p]));
+        constraints.push(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
     }
 
     // Pitcher Logic
     for (s_idx, student) in students.iter().enumerate() {
         if student.is_pitcher {
             if let Some(p_idx) = projects.iter().position(|p| p == &student.choices[0]) {
-                model = model.with(constraint!(x[s_idx][p_idx] == y[p_idx]));
+                constraints.push(constraint!(x[s_idx][p_idx] == y[p_idx]));
             }
         }
     }
@@ -116,11 +116,11 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
             if let Some(&t_idx) = netid_to_idx.get(t_netid) {
                 if s_idx < t_idx {
                     for p in 0..num_projects {
-                        let z = model.add_variable(variable().binary());
+                        let z = vars.add(variable().binary());
                         // z >= x[s][p] - x[t][p]
-                        model = model.with(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
+                        constraints.push(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
                         // z >= x[t][p] - x[s][p]
-                        model = model.with(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
+                        constraints.push(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
                         
                         objective += z * config.teammate_penalty;
                     }
@@ -130,7 +130,12 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    if let Ok(solution) = model.minimise(objective).using(good_lp::microlp).solve() {
+    let mut model = vars.minimise(objective);
+    for c in constraints {
+        model.add_constraint(c);
+    }
+
+    if let Ok(solution) = model.using(good_lp::microlp).solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
