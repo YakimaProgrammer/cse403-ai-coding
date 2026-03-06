@@ -1,10 +1,16 @@
 [package]
-name = "frontend"
+name = "cse403-student-assignments"
 version = "0.1.0"
 edition = "2021"
+description = "Assigns students to projects using linear programs!"
+readme = "README.md"
+repository = "https://github.com/YakimaProgrammer/cse403-ai-coding"
+license = "MIT OR Apache-2.0"
+keywords = ["yew", "trunk"]
+categories = ["gui", "wasm", "web-programming"]
 
 [dependencies]
-yew = { version = "0.21", features = ["csr"] }
+yew = { version = "0.22", features = ["csr"] }
 gloo-file = "0.3"
 csv = "1.3"
 serde = { version = "1.0", features = ["derive"] }
@@ -14,10 +20,3 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["HtmlInputElement", "File", "FileList", "Event", "HtmlSelectElement"] }
 js-sys = "0.3"
 good_lp = { version = "1.9", features = ["microlp"] }
-
-[profile.release]
-opt-level = "z"
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
