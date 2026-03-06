@@ -33,11 +33,18 @@ pub fn app() -> Html {
                     let csv_data = csv_data.clone();
                     let columns = columns.clone();
                     read_as_text(&file, move |res| {
-                        if let Ok(text) = res {
-                            if let Ok((headers, data)) = parse_csv(&text) {
-                                columns.set(headers);
-                                csv_data.set(data);
+                        match res {
+                            Ok(text) => {
+                                match parse_csv(&text) {
+                                    Ok((headers, data)) => {
+                                        web_sys::console::log_1(&"CSV parsed successfully".into());
+                                        columns.set(headers);
+                                        csv_data.set(data);
+                                    }
+                                    Err(e) => web_sys::console::error_1(&format!("CSV Parse Error: {}", e).into()),
+                                }
                             }
+                            Err(e) => web_sys::console::error_1(&format!("File Read Error: {:?}", e).into()),
                         }
                     });
                 }
@@ -90,23 +97,23 @@ pub fn app() -> Html {
                     <p>{ "Please manually map the following fields to the correct columns in your CSV." }</p>
                     <div>
                         <label>{ "Name Column: " }</label>
-                        <select onchange={let name_col = name_col.clone(); Callback::from(move |e: Event| name_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
+                        <select value={(*name_col).clone()} onchange={let name_col = name_col.clone(); Callback::from(move |e: Event| name_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
-                            { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
+                            { for columns.iter().map(|col| html! { <option value={col.clone()} selected={*name_col == col.clone()}>{ col }</option> }) }
                         </select>
                     </div>
                     <div>
                         <label>{ "NetID Column: " }</label>
-                        <select onchange={let netid_col = netid_col.clone(); Callback::from(move |e: Event| netid_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
+                        <select value={(*netid_col).clone()} onchange={let netid_col = netid_col.clone(); Callback::from(move |e: Event| netid_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
-                            { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
+                            { for columns.iter().map(|col| html! { <option value={col.clone()} selected={*netid_col == col.clone()}>{ col }</option> }) }
                         </select>
                     </div>
                     <div>
                         <label>{ "Pitcher Column: " }</label>
-                        <select onchange={let pitcher_col = pitcher_col.clone(); Callback::from(move |e: Event| pitcher_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
+                        <select value={(*pitcher_col).clone()} onchange={let pitcher_col = pitcher_col.clone(); Callback::from(move |e: Event| pitcher_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
-                            { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
+                            { for columns.iter().map(|col| html! { <option value={col.clone()} selected={*pitcher_col == col.clone()}>{ col }</option> }) }
                         </select>
                     </div>
 
