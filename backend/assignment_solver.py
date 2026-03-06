@@ -8,12 +8,25 @@ def solve_assignments(csv_file_path):
     with open(csv_file_path, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
+            choices = [
+                row['First (1) Choice'], 
+                row['Second (2)  Choice'], 
+                row['Third (3) Choice'], 
+                row['Fourth (4) Choice'], 
+                row['Fifth (5) Choice']
+            ]
+            teammates = [
+                row['Team Member #1 UW NetID'],
+                row['Team Member #2 UW NetID'],
+                row['Team Member #3 UW NetID']
+            ]
+            pitched = row['Project Pitched']
             student_data = {
                 'name': row['Name'],
                 'netid': row['NetID'],
-                'choices': [row['First (1) Choice'], row['Second (2) Choice'], row['Third (3) Choice'], row['Fourth (4) Choice'], row['Fifth (5) Choice']],
-                'teammate': row['Preferred Teammate NetID'],
-                'is_pitcher': row['Is Pitcher'].lower() == 'yes'
+                'choices': choices,
+                'teammates': [t for t in teammates if t],
+                'is_pitcher': pitched and choices and pitched == choices[0]
             }
             students.append(student_data)
             for choice in student_data['choices']:
@@ -67,15 +80,15 @@ def solve_assignments(csv_file_path):
     # Teammate Penalty: z_{s,t,p} >= x[s][p] - x[t][p] and z_{s,t,p} >= x[t][p] - x[s][p]
     netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
     for s_idx, student in enumerate(students):
-        t_netid = student['teammate']
-        if t_netid in netid_to_idx:
-            t_idx = netid_to_idx[t_netid]
-            if s_idx < t_idx: # Avoid double counting
-                for p_idx in range(num_projects):
-                    z = solver.BoolVar(f'z_{s_idx}_{t_idx}_{p_idx}')
-                    solver.Add(z >= x[s_idx][p_idx] - x[t_idx][p_idx])
-                    solver.Add(z >= x[t_idx][p_idx] - x[s_idx][p_idx])
-                    obj_terms.append(z * teammate_penalty_weight)
+        for t_netid in student['teammates']:
+            if t_netid in netid_to_idx:
+                t_idx = netid_to_idx[t_netid]
+                if s_idx < t_idx: # Avoid double counting
+                    for p_idx in range(num_projects):
+                        z = solver.BoolVar(f'z_{s_idx}_{t_idx}_{p_idx}')
+                        solver.Add(z >= x[s_idx][p_idx] - x[t_idx][p_idx])
+                        solver.Add(z >= x[t_idx][p_idx] - x[s_idx][p_idx])
+                        obj_terms.append(z * teammate_penalty_weight)
 
     solver.Minimize(solver.Sum(obj_terms))
 
