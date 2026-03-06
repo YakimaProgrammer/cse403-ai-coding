@@ -6,42 +6,30 @@ def solve_assignments(csv_file_path):
         reader = csv.DictReader(f)
         return solve_assignments_from_list(list(reader))
 
-def solve_assignments_from_list(rows, config=None):
-    if config is None:
-        config = {
-            'column_map': {
-                'name': 'Name',
-                'netid': 'NetID',
-                'pitched': 'Project Pitched',
-                'choices': [
-                    'First (1) Choice', 'Second (2)  Choice', 'Third (3) Choice', 
-                    'Fourth (4) Choice', 'Fifth (5) Choice'
-                ],
-                'teammates': [
-                    'Team Member #1 UW NetID', 'Team Member #2 UW NetID', 'Team Member #3 UW NetID'
-                ]
-            },
-            'team_size': {'min': 4, 'max': 6},
-            'weights': [0, 5, 15, 30, 50],
-            'unlisted_penalty': 200,
-            'teammate_penalty': 50
-        }
-
+def solve_assignments_from_list(rows):
     students = []
     projects_set = set()
-    col = config['column_map']
     
     for row in rows:
-        choices = [row.get(c) for c in col['choices'] if row.get(c)]
-        teammates = [row.get(t) for t in col['teammates'] if row.get(t)]
-        pitched = row.get(col['pitched'])
-        
+        choices = [
+            row['First (1) Choice'], 
+            row['Second (2)  Choice'], 
+            row['Third (3) Choice'], 
+            row['Fourth (4) Choice'], 
+            row['Fifth (5) Choice']
+        ]
+        teammates = [
+            row['Team Member #1 UW NetID'],
+            row['Team Member #2 UW NetID'],
+            row['Team Member #3 UW NetID']
+        ]
+        pitched = row['Project Pitched']
         student_data = {
-            'name': row.get(col['name']),
-            'netid': row.get(col['netid']),
+            'name': row['Name'],
+            'netid': row['NetID'],
             'choices': choices,
-            'teammates': teammates,
-            'is_pitcher': pitched and choices and (pitched == choices[0])
+            'teammates': [t for t in teammates if t],
+            'is_pitcher': pitched and choices and (len(choices) > 0 and pitched == choices[0])
         }
         students.append(student_data)
         for choice in student_data['choices']:
@@ -66,11 +54,9 @@ def solve_assignments_from_list(rows, config=None):
         solver.Add(sum(x[s][p] for p in range(num_projects)) == 1)
 
     # Constraints: Team Capacity
-    min_size = config['team_size']['min']
-    max_size = config['team_size']['max']
     for p in range(num_projects):
-        solver.Add(sum(x[s][p] for s in range(num_students)) <= max_size * y[p])
-        solver.Add(sum(x[s][p] for s in range(num_students)) >= min_size * y[p])
+        solver.Add(sum(x[s][p] for s in range(num_students)) <= 6 * y[p])
+        solver.Add(sum(x[s][p] for s in range(num_students)) >= 4 * y[p])
 
     # Constraints: Pitcher Requirement
     for s_idx, student in enumerate(students):
@@ -81,23 +67,21 @@ def solve_assignments_from_list(rows, config=None):
                 solver.Add(x[s_idx][p_idx] == y[p_idx])
 
     # Objective
-    weights = config['weights']
-    unlisted_penalty = config['unlisted_penalty']
-    teammate_penalty_weight = config['teammate_penalty']
+    weights = [0, 5, 15, 30, 50]
+    unlisted_penalty = 200
+    teammate_penalty_weight = 50
     obj_terms = []
 
     for s_idx, student in enumerate(students):
         for p_idx, p_name in enumerate(projects):
             if p_name in student['choices']:
                 choice_rank = student['choices'].index(p_name)
-                # Handle cases where preferences might be fewer than weights defined
-                weight = weights[choice_rank] if choice_rank < len(weights) else unlisted_penalty
-                obj_terms.append(x[s_idx][p_idx] * weight)
+                obj_terms.append(x[s_idx][p_idx] * weights[choice_rank])
             else:
                 obj_terms.append(x[s_idx][p_idx] * unlisted_penalty)
 
     # Teammate Penalty: z_{s,t,p} >= x[s][p] - x[t][p] and z_{s,t,p} >= x[t][p] - x[s][p]
-    netid_to_idx = {s['netid']: i for i, s in enumerate(students) if s['netid']}
+    netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
     for s_idx, student in enumerate(students):
         for t_netid in student['teammates']:
             if t_netid in netid_to_idx:

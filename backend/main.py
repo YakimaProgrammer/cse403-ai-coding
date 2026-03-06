@@ -22,9 +22,9 @@ async def solve_teams(file: UploadFile = File(...)):
         decoded = content.decode('utf-8')
         reader = csv.DictReader(io.StringIO(decoded))
         
-        # Validate headers (Simple check for NetID and Name)
-        if 'NetID' not in reader.fieldnames or 'Name' not in reader.fieldnames:
-            raise HTTPException(status_code=400, detail="CSV must at least contain 'NetID' and 'Name' columns.")
+        # Validate headers
+        if not all(col in reader.fieldnames for col in REQUIRED_COLUMNS):
+            raise HTTPException(status_code=400, detail="CSV is missing required columns.")
         
         rows = list(reader)
         if not rows:
