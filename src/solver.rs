@@ -119,14 +119,20 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
 
         if !valid_teammate_indices.is_empty() {
             for p in 0..num_projects {
-                // To satisfy "at least one preferred teammate", we create a variable z
-                // that is true if student s is with at least one teammate t on project p.
-                // However, the spec is simpler: if s is on p, then at least one t must be on p.
-                // sum(x[t][p] for t in teammates) >= x[s][p]
-                let teammate_sum: Expression = valid_teammate_indices.iter()
-                    .map(|&t_idx| Expression::from(x[t_idx][p]))
-                    .sum();
-                constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
+                // Optimization: If student s is on project p, they must have at least one teammate t on project p.
+                // We only need to enforce this for projects p that student s actually ranked to keep the model small.
+                if student.choices.contains(&projects[p]) {
+                    let teammate_sum: Expression = valid_teammate_indices.iter()
+                        .map(|&t_idx| Expression::from(x[t_idx][p]))
+                        .sum();
+                    constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
+                } else {
+                    // If they are on an unlisted project, they still need a teammate there.
+                    let teammate_sum: Expression = valid_teammate_indices.iter()
+                        .map(|&t_idx| Expression::from(x[t_idx][p]))
+                        .sum();
+                    constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
+                }
             }
         }
     }
