@@ -11,7 +11,7 @@ def solve_assignments(csv_file_path):
             student_data = {
                 'name': row['Name'],
                 'netid': row['NetID'],
-                'choices': [row['Choice 1'], row['Choice 2'], row['Choice 3'], row['Choice 4'], row['Choice 5']],
+                'choices': [row['First (1) Choice'], row['Second (2) Choice'], row['Third (3) Choice'], row['Fourth (4) Choice'], row['Fifth (5) Choice']],
                 'teammate': row['Preferred Teammate NetID'],
                 'is_pitcher': row['Is Pitcher'].lower() == 'yes'
             }
