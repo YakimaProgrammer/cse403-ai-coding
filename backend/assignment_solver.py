@@ -55,8 +55,14 @@ def solve_assignments_from_list(rows):
 
     # Constraints: Team Capacity
     for p in range(num_projects):
-        solver.Add(sum(x[s][p] for s in range(num_students)) <= 6 * y[p])
-        solver.Add(sum(x[s][p] for s in range(num_students)) >= 4 * y[p])
+        team_size = sum(x[s][p] for s in range(num_students))
+        solver.Add(team_size <= 6 * y[p])
+        solver.Add(team_size >= 4 * y[p])
+        
+        # Preference for size 6: small negative weight (reward) for size 6
+        is_size_6 = solver.BoolVar(f'is_size_6_{p}')
+        solver.Add(team_size >= 6 * is_size_6)
+        obj_terms.append(is_size_6 * -1)
 
     # Constraints: Pitcher Requirement
     for s_idx, student in enumerate(students):
@@ -80,18 +86,15 @@ def solve_assignments_from_list(rows):
             else:
                 obj_terms.append(x[s_idx][p_idx] * unlisted_penalty)
 
-    # Teammate Penalty: z_{s,t,p} >= x[s][p] - x[t][p] and z_{s,t,p} >= x[t][p] - x[s][p]
+    # Teammate Requirement: If a student lists teammates, they must be with at least one.
     netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
     for s_idx, student in enumerate(students):
-        for t_netid in student['teammates']:
-            if t_netid in netid_to_idx:
-                t_idx = netid_to_idx[t_netid]
-                if s_idx < t_idx: # Avoid double counting
-                    for p_idx in range(num_projects):
-                        z = solver.BoolVar(f'z_{s_idx}_{t_idx}_{p_idx}')
-                        solver.Add(z >= x[s_idx][p_idx] - x[t_idx][p_idx])
-                        solver.Add(z >= x[t_idx][p_idx] - x[s_idx][p_idx])
-                        obj_terms.append(z * teammate_penalty_weight)
+        valid_teammate_indices = [netid_to_idx[t] for t in student['teammates'] if t in netid_to_idx and netid_to_idx[t] != s_idx]
+        if valid_teammate_indices:
+            for p_idx in range(num_projects):
+                # x[s][p] <= sum(x[t][p] for t in teammates)
+                # If student s is on project p, at least one teammate t must also be on project p.
+                solver.Add(x[s_idx][p_idx] <= sum(x[t_idx][p_idx] for t_idx in valid_teammate_indices))
 
     solver.Minimize(solver.Sum(obj_terms))
 
