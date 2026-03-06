@@ -21,4 +21,4 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["HtmlInputElement", "File", "FileList", "Event", "HtmlSelectElement"] }
 js-sys = "0.3"
 good_lp = { version = "1.9", default-features = false, features = ["microlp"] }
-gloo-worker = "0.5.0"
+gloo-worker = { version = "0.5.0", features = ["futures"] }
