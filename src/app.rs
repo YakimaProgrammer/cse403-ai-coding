@@ -17,8 +17,8 @@ pub fn app() -> Html {
     let name_col = use_state(|| "".to_string());
     let netid_col = use_state(|| "".to_string());
     let pitcher_col = use_state(|| "".to_string());
-    let pref_cols = use_state(|| vec!["".to_string()]);
-    let teammate_cols = use_state(|| vec!["".to_string()]);
+    let pref_cols = use_state(|| vec!["".to_string(); 5]);
+    let teammate_cols = use_state(|| vec!["".to_string(); 3]);
     let min_size = use_state(|| 4u32);
     let max_size = use_state(|| 6u32);
 
@@ -120,6 +120,46 @@ pub fn app() -> Html {
                             <option value="">{ "-- Select --" }</option>
                             { for columns.iter().map(|col| html! { <option value={col.clone()} selected={*pitcher_col == col.clone()}>{ col }</option> }) }
                         </select>
+                    </div>
+
+                    <div>
+                        <h3>{ "Preference Columns (in order)" }</h3>
+                        { for (*pref_cols).iter().enumerate().map(|(i, val)| {
+                            let pref_cols = pref_cols.clone();
+                            html! {
+                                <div key={i}>
+                                    <label>{ format!("Choice {}: ", i + 1) }</label>
+                                    <select value={val.clone()} onchange={Callback::from(move |e: Event| {
+                                        let mut new_prefs = (*pref_cols).clone();
+                                        new_prefs[i] = e.target_unchecked_into::<web_sys::HtmlSelectElement>().value();
+                                        pref_cols.set(new_prefs);
+                                    })}>
+                                        <option value="">{ "-- Select --" }</option>
+                                        { for columns.iter().map(|col| html! { <option value={col.clone()} selected={val == col}>{ col }</option> }) }
+                                    </select>
+                                </div>
+                            }
+                        }) }
+                    </div>
+
+                    <div>
+                        <h3>{ "Teammate NetID Columns" }</h3>
+                        { for (*teammate_cols).iter().enumerate().map(|(i, val)| {
+                            let teammate_cols = teammate_cols.clone();
+                            html! {
+                                <div key={i}>
+                                    <label>{ format!("Teammate {}: ", i + 1) }</label>
+                                    <select value={val.clone()} onchange={Callback::from(move |e: Event| {
+                                        let mut new_teammates = (*teammate_cols).clone();
+                                        new_teammates[i] = e.target_unchecked_into::<web_sys::HtmlSelectElement>().value();
+                                        teammate_cols.set(new_teammates);
+                                    })}>
+                                        <option value="">{ "-- Select --" }</option>
+                                        { for columns.iter().map(|col| html! { <option value={col.clone()} selected={val == col}>{ col }</option> }) }
+                                    </select>
+                                </div>
+                            }
+                        }) }
                     </div>
 
                     <h3>{ "Settings" }</h3>
