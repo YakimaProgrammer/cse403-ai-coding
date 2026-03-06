@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use good_lp::{variables, variable, Expression, SolverModel, Solution, constraint, IntoAffExpr};
+use good_lp::{variables, variable, Expression, SolverModel, Solution, constraint};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SolverConfig {
@@ -68,7 +68,32 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     // y[p]: project p is active
     let y: Vec<_> = (0..num_projects).map(|_| vars.add(variable().binary())).collect();
 
-    // 3. Objective (Weights)
+    // 3. Constraints & Model Initialization
+    let mut model = vars.minimize(Expression::from(0.0));
+
+    // Each student assigned to exactly one project
+    for s in 0..num_students {
+        let row_sum: Expression = x[s].iter().map(|&v| Expression::from(v)).sum();
+        model = model.with(constraint!(row_sum == 1.0));
+    }
+
+    // Team Size Constraints
+    for p in 0..num_projects {
+        let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
+        model = model.with(constraint!(col_sum <= (config.max_team_size as f64) * y[p]));
+        model = model.with(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
+    }
+
+    // Pitcher Logic
+    for (s_idx, student) in students.iter().enumerate() {
+        if student.is_pitcher {
+            if let Some(p_idx) = projects.iter().position(|p| p == &student.choices[0]) {
+                model = model.with(constraint!(x[s_idx][p_idx] == y[p_idx]));
+            }
+        }
+    }
+
+    // 4. Objective (Weights)
     let mut objective = Expression::from(0.0);
     for s in 0..num_students {
         for p in 0..num_projects {
@@ -78,31 +103,6 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
                 config.unlisted_penalty
             };
             objective += x[s][p] * weight;
-        }
-    }
-
-    let mut problem = vars.minimise(objective);
-
-    // 4. Constraints
-    // Each student assigned to exactly one project
-    for s in 0..num_students {
-        let row_sum: Expression = x[s].iter().map(|&v| v.into_aff_expr()).sum();
-        problem = problem.using(constraint!(row_sum == 1.0));
-    }
-
-    // Team Size Constraints
-    for p in 0..num_projects {
-        let col_sum: Expression = (0..num_students).map(|s| x[s][p].into_aff_expr()).sum();
-        problem = problem.using(constraint!(col_sum <= (config.max_team_size as f64) * y[p]));
-        problem = problem.using(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
-    }
-
-    // Pitcher Logic
-    for (s_idx, student) in students.iter().enumerate() {
-        if student.is_pitcher {
-            if let Some(p_idx) = projects.iter().position(|p| p == &student.choices[0]) {
-                problem = problem.using(constraint!(x[s_idx][p_idx] == y[p_idx]));
-            }
         }
     }
 
@@ -116,11 +116,11 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
             if let Some(&t_idx) = netid_to_idx.get(t_netid) {
                 if s_idx < t_idx {
                     for p in 0..num_projects {
-                        let z = vars.add(variable().binary());
+                        let z = model.add_variable(variable().binary());
                         // z >= x[s][p] - x[t][p]
-                        problem = problem.using(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
+                        model = model.with(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
                         // z >= x[t][p] - x[s][p]
-                        problem = problem.using(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
+                        model = model.with(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
                         
                         objective += z * config.teammate_penalty;
                     }
@@ -130,7 +130,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    if let Ok(solution) = problem.minimise(objective).using(good_lp::microlp).solve() {
+    if let Ok(solution) = model.minimize(objective).using(good_lp::microlp).solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
