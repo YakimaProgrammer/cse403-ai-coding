@@ -88,21 +88,21 @@ pub fn app() -> Html {
                     <h2>{ "Column Mapping" }</h2>
                     <div>
                         <label>{ "Name Column: " }</label>
-                        <select onchange={let name_col = name_col.clone(); Callback::from(move |e: Event| name_col.set(e.target_unchecked_into::<HtmlInputElement>().value()))}>
+                        <select onchange={let name_col = name_col.clone(); Callback::from(move |e: Event| name_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
                             { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
                         </select>
                     </div>
                     <div>
                         <label>{ "NetID Column: " }</label>
-                        <select onchange={let netid_col = netid_col.clone(); Callback::from(move |e: Event| netid_col.set(e.target_unchecked_into::<HtmlInputElement>().value()))}>
+                        <select onchange={let netid_col = netid_col.clone(); Callback::from(move |e: Event| netid_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
                             { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
                         </select>
                     </div>
                     <div>
                         <label>{ "Pitcher Column: " }</label>
-                        <select onchange={let pitcher_col = pitcher_col.clone(); Callback::from(move |e: Event| pitcher_col.set(e.target_unchecked_into::<HtmlInputElement>().value()))}>
+                        <select onchange={let pitcher_col = pitcher_col.clone(); Callback::from(move |e: Event| pitcher_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
                             <option value="">{ "-- Select --" }</option>
                             { for columns.iter().map(|col| html! { <option value={col.clone()}>{ col }</option> }) }
                         </select>
