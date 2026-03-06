@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use csv::ReaderBuilder;
 
+#[allow(dead_code)]
 pub fn parse_csv(text: &str) -> Result<(Vec<String>, Vec<HashMap<String, String>>), String> {
     let mut reader = ReaderBuilder::new()
         .has_headers(true)
