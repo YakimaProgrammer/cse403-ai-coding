@@ -1,3 +1,6 @@
 .aider*
 env/
 backend/__pycache__
+frontend/node_modules/
+frontend/dist/
+.claude/
