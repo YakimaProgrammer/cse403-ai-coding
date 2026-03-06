@@ -9,6 +9,14 @@ license = "MIT OR Apache-2.0"
 keywords = ["yew", "trunk"]
 categories = ["gui", "wasm", "web-programming"]
 
+[[bin]]
+name = "cse403-student-assignments"
+path = "src/main.rs"
+
+[[bin]]
+name = "worker"
+path = "src/worker.rs"
+
 [dependencies]
 yew = { version = "0.22", features = ["csr"] }
 gloo-file = { version = "0.3", features = ["futures"] }
