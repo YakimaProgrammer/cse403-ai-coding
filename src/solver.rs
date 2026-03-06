@@ -229,4 +229,40 @@ mod tests {
         let members = result.get("P1").unwrap();
         assert!(members.contains(&"S1".to_string()));
     }
+
+    #[test]
+    fn test_full_dataset() {
+        let csv_text = include_str!("../backend/GenAI-InputFile - ProjectPreferences.csv");
+        let (headers, data) = crate::csv_parser::parse_csv(csv_text).expect("Should parse CSV");
+
+        let config = SolverConfig {
+            name_col: "Name".to_string(),
+            netid_col: "NetID".to_string(),
+            pitcher_col: "Project Pitched".to_string(),
+            preference_cols: vec![
+                "First (1) Choice".to_string(),
+                "Second (2)  Choice".to_string(),
+                "Third (3) Choice".to_string(),
+                "Fourth (4) Choice".to_string(),
+                "Fifth (5) Choice".to_string(),
+            ],
+            teammate_cols: vec![
+                "Team Member #1 UW NetID".to_string(),
+                "Team Member #2 UW NetID".to_string(),
+                "Team Member #3 UW NetID".to_string(),
+            ],
+            min_team_size: 2,
+            max_team_size: 6,
+            weights: vec![0.0, 5.0, 15.0, 30.0, 50.0],
+            unlisted_penalty: 100.0,
+            teammate_penalty: 50.0,
+        };
+
+        let result = solve(&config, &data);
+        assert!(result.is_some(), "Should find a feasible solution for the full dataset");
+        
+        let assignments = result.unwrap();
+        let total_assigned: usize = assignments.values().map(|m| m.len()).sum();
+        assert_eq!(total_assigned, data.len(), "Every student should be assigned to a project");
+    }
 }
