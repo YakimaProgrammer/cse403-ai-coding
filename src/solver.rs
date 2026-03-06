@@ -116,13 +116,14 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
             if let Some(&t_idx) = netid_to_idx.get(t_netid) {
                 if s_idx < t_idx {
                     for p in 0..num_projects {
+                        // Optimization: Instead of 2 constraints and a new variable per project,
+                        // we use the fact that these are binary variables.
+                        // Penalty applies if x[s][p] != x[t][p]
                         let z = vars.add(variable().binary());
-                        // z >= x[s][p] - x[t][p]
                         constraints.push(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
-                        // z >= x[t][p] - x[s][p]
                         constraints.push(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
                         
-                        objective += z * config.teammate_penalty;
+                        objective += z * (config.teammate_penalty / 2.0);
                     }
                 }
             }
