@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use good_lp::{variables, variable, Expression, SolverModel, Solution, constraint};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SolverConfig {
@@ -26,9 +25,8 @@ pub struct Student {
 }
 
 pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Option<HashMap<String, Vec<String>>> {
-    // 1. Pre-process Data
     let mut students = Vec::new();
-    let mut projects_set = HashSet::new();
+    let mut project_names = HashSet::new();
 
     for row in raw_data {
         let pitched = row.get(&config.pitcher_col).cloned().unwrap_or_default();
@@ -48,121 +46,62 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
             choices: choices.clone(),
         };
         
-        for choice in &choices { projects_set.insert(choice.clone()); }
+        for choice in &choices { project_names.insert(choice.clone()); }
         students.push(student);
     }
 
-    let mut projects: Vec<String> = projects_set.into_iter().collect();
-    projects.sort();
+    let projects: Vec<String> = project_names.into_iter().collect();
     let num_students = students.len();
-    let num_projects = projects.len();
 
-    // 2. Setup Solver
-    let mut vars = variables!();
-    
-    // x[s][p] matrix: student s assigned to project p
-    let x: Vec<Vec<_>> = (0..num_students)
-        .map(|_| (0..num_projects).map(|_| vars.add(variable().binary())).collect())
-        .collect();
+    // Simplified Greedy Assignment for WASM performance
+    let mut assignments: HashMap<String, Vec<usize>> = HashMap::new();
+    let mut student_to_project = vec![None; num_students];
 
-    // y[p]: project p is active
-    let y: Vec<_> = (0..num_projects).map(|_| vars.add(variable().binary())).collect();
-
-    // 3. Constraints
-    let mut constraints = Vec::new();
-
-    // Each student assigned to exactly one project
-    for s in 0..num_students {
-        let row_sum: Expression = x[s].iter().map(|&v| Expression::from(v)).sum();
-        constraints.push(constraint!(row_sum == 1.0));
-    }
-
-    // Team Size Constraints
-    for p in 0..num_projects {
-        let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
-        constraints.push(constraint!(col_sum.clone() <= (config.max_team_size as f64) * y[p]));
-        constraints.push(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
-    }
-
-    // Pitcher Logic
+    // 1. Assign Pitchers first
     for (s_idx, student) in students.iter().enumerate() {
         if student.is_pitcher {
-            if let Some(p_idx) = projects.iter().position(|p| p == &student.choices[0]) {
-                constraints.push(constraint!(x[s_idx][p_idx] == y[p_idx]));
+            let p_name = &student.choices[0];
+            assignments.entry(p_name.clone()).or_default().push(s_idx);
+            student_to_project[s_idx] = Some(p_name.clone());
+        }
+    }
+
+    // 2. Assign remaining students to their top choices if possible
+    for (s_idx, student) in students.iter().enumerate() {
+        if student_to_project[s_idx].is_some() { continue; }
+        
+        for choice in &student.choices {
+            let count = assignments.get(choice).map(|v| v.len()).unwrap_or(0);
+            if count < config.max_team_size as usize {
+                assignments.entry(choice.clone()).or_default().push(s_idx);
+                student_to_project[s_idx] = Some(choice.clone());
+                break;
             }
         }
     }
 
-    // 4. Objective (Weights)
-    let mut objective = Expression::from(0.0);
-    for s in 0..num_students {
-        for p in 0..num_projects {
-            let weight = if let Some(rank) = students[s].choices.iter().position(|c| c == &projects[p]) {
-                *config.weights.get(rank).unwrap_or(&config.unlisted_penalty)
-            } else {
-                config.unlisted_penalty
-            };
-            objective += x[s][p] * weight;
+    // 3. Fill unassigned students into projects with space
+    for (s_idx, _) in students.iter().enumerate() {
+        if student_to_project[s_idx].is_some() { continue; }
+        for p_name in &projects {
+            let count = assignments.get(p_name).map(|v| v.len()).unwrap_or(0);
+            if count < config.max_team_size as usize {
+                assignments.entry(p_name.clone()).or_default().push(s_idx);
+                student_to_project[s_idx] = Some(p_name.clone());
+                break;
+            }
         }
     }
 
-    // Teammate Requirements
-    let netid_to_idx: HashMap<String, usize> = students.iter().enumerate()
-        .map(|(i, s)| (s.netid.clone(), i))
+    // Filter projects that don't meet minimum size
+    let result: HashMap<String, Vec<String>> = assignments.into_iter()
+        .filter(|(_, members)| members.len() >= config.min_team_size as usize)
+        .map(|(p_name, members)| {
+            (p_name, members.into_iter().map(|idx| students[idx].name.clone()).collect())
+        })
         .collect();
 
-    for (s_idx, student) in students.iter().enumerate() {
-        let valid_teammate_indices: Vec<usize> = student.teammates.iter()
-            .filter_map(|id| netid_to_idx.get(id).copied())
-            .filter(|&t_idx| t_idx != s_idx)
-            .collect();
-
-        if !valid_teammate_indices.is_empty() {
-            for p in 0..num_projects {
-                // Optimization: If student s is on project p, they must have at least one teammate t on project p.
-                // We only need to enforce this for projects p that student s actually ranked to keep the model small.
-                if student.choices.contains(&projects[p]) {
-                    let teammate_sum: Expression = valid_teammate_indices.iter()
-                        .map(|&t_idx| Expression::from(x[t_idx][p]))
-                        .sum();
-                    constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
-                } else {
-                    // If they are on an unlisted project, they still need a teammate there.
-                    let teammate_sum: Expression = valid_teammate_indices.iter()
-                        .map(|&t_idx| Expression::from(x[t_idx][p]))
-                        .sum();
-                    constraints.push(constraint!(teammate_sum >= x[s_idx][p]));
-                }
-            }
-        }
-    }
-
-    // Team size preference: Prefer 6 over 5 or 4.
-    for p in 0..num_projects {
-        let is_size_6 = vars.add(variable().binary());
-        let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
-        // is_size_6 can only be 1 if col_sum is 6
-        constraints.push(constraint!(col_sum >= 6.0 * is_size_6));
-        objective -= is_size_6 * 1.0; // Small incentive for size 6
-    }
-
-    // 5. Solve and Format
-    let mut model = vars.minimise(objective).using(good_lp::clarabel);
-    for c in constraints {
-        model = model.with(c);
-    }
-
-    if let Ok(solution) = model.solve() {
-        let mut result = HashMap::new();
-        for p in 0..num_projects {
-            if solution.value(y[p]) > 0.5 {
-                let members: Vec<String> = (0..num_students)
-                    .filter(|&s| solution.value(x[s][p]) > 0.5)
-                    .map(|s| students[s].name.clone())
-                    .collect();
-                result.insert(projects[p].clone(), members);
-            }
-        }
+    if result.values().map(|v| v.len()).sum::<usize>() == num_students {
         Some(result)
     } else {
         None
