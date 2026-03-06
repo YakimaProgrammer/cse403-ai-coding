@@ -1,6 +1,6 @@
 use yew::prelude::*;
-use gloo_file::callbacks::read_as_text;
 use gloo_file::File;
+use gloo_file::futures::read_as_text;
 use web_sys::HtmlInputElement;
 use std::collections::HashMap;
 
@@ -35,9 +35,9 @@ pub fn app() -> Html {
                     web_sys::console::log_1(&format!("Processing file: {}", file.name()).into());
                     let csv_data = csv_data.clone();
                     let columns = columns.clone();
-                    read_as_text(&file, move |res| {
-                        web_sys::console::log_1(&"read_as_text callback triggered".into());
-                        match res {
+                    wasm_bindgen_futures::spawn_local(async move {
+                        web_sys::console::log_1(&"Starting async file read".into());
+                        match read_as_text(&file).await {
                             Ok(text) => {
                                 web_sys::console::log_1(&format!("File text read successfully ({} chars)", text.len()).into());
                                 match parse_csv(&text) {
