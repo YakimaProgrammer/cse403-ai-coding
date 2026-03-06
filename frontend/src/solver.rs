@@ -69,7 +69,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     let y: Vec<_> = (0..num_projects).map(|_| vars.add(variable().binary())).collect();
 
     // 3. Constraints & Model Initialization
-    let mut model = vars.minimize(Expression::from(0.0));
+    let mut model = vars.minimise(Expression::from(0.0));
 
     // Each student assigned to exactly one project
     for s in 0..num_students {
@@ -130,7 +130,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    if let Ok(solution) = model.minimize(objective).using(good_lp::microlp).solve() {
+    if let Ok(solution) = model.minimise(objective).using(good_lp::microlp).solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
