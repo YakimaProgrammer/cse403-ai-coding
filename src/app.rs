@@ -44,6 +44,7 @@ pub fn app() -> Html {
         let result = result.clone();
         let is_solving = is_solving.clone();
         use_memo(
+            (),
             move |_| {
                 SolverWorker::spawner()
                     .callback(move |res| {
@@ -52,7 +53,6 @@ pub fn app() -> Html {
                     })
                     .spawn("./worker.js")
             },
-            (),
         )
     };
 
