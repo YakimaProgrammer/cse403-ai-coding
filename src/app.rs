@@ -88,8 +88,6 @@ pub fn app() -> Html {
                 <section style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
                     <h2>{ "Step 2: Map Columns" }</h2>
                     <p>{ "Please manually map the following fields to the correct columns in your CSV." }</p>
-                <section style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
-                    <h2>{ "Column Mapping" }</h2>
                     <div>
                         <label>{ "Name Column: " }</label>
                         <select onchange={let name_col = name_col.clone(); Callback::from(move |e: Event| name_col.set(e.target_unchecked_into::<web_sys::HtmlSelectElement>().value()))}>
