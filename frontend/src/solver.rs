@@ -80,7 +80,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     // Team Size Constraints
     for p in 0..num_projects {
         let col_sum: Expression = (0..num_students).map(|s| Expression::from(x[s][p])).sum();
-        constraints.push(constraint!(col_sum <= (config.max_team_size as f64) * y[p]));
+        constraints.push(constraint!(col_sum.clone() <= (config.max_team_size as f64) * y[p]));
         constraints.push(constraint!(col_sum >= (config.min_team_size as f64) * y[p]));
     }
 
