@@ -2,36 +2,39 @@ import csv
 from ortools.linear_solver import pywraplp
 
 def solve_assignments(csv_file_path):
+    with open(csv_file_path, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        return solve_assignments_from_list(list(reader))
+
+def solve_assignments_from_list(rows):
     students = []
     projects_set = set()
     
-    with open(csv_file_path, mode='r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            choices = [
-                row['First (1) Choice'], 
-                row['Second (2)  Choice'], 
-                row['Third (3) Choice'], 
-                row['Fourth (4) Choice'], 
-                row['Fifth (5) Choice']
-            ]
-            teammates = [
-                row['Team Member #1 UW NetID'],
-                row['Team Member #2 UW NetID'],
-                row['Team Member #3 UW NetID']
-            ]
-            pitched = row['Project Pitched']
-            student_data = {
-                'name': row['Name'],
-                'netid': row['NetID'],
-                'choices': choices,
-                'teammates': [t for t in teammates if t],
-                'is_pitcher': pitched and choices and pitched == choices[0]
-            }
-            students.append(student_data)
-            for choice in student_data['choices']:
-                if choice:
-                    projects_set.add(choice)
+    for row in rows:
+        choices = [
+            row['First (1) Choice'], 
+            row['Second (2)  Choice'], 
+            row['Third (3) Choice'], 
+            row['Fourth (4) Choice'], 
+            row['Fifth (5) Choice']
+        ]
+        teammates = [
+            row['Team Member #1 UW NetID'],
+            row['Team Member #2 UW NetID'],
+            row['Team Member #3 UW NetID']
+        ]
+        pitched = row['Project Pitched']
+        student_data = {
+            'name': row['Name'],
+            'netid': row['NetID'],
+            'choices': choices,
+            'teammates': [t for t in teammates if t],
+            'is_pitcher': pitched and choices and (len(choices) > 0 and pitched == choices[0])
+        }
+        students.append(student_data)
+        for choice in student_data['choices']:
+            if choice:
+                projects_set.add(choice)
 
     projects = sorted(list(projects_set))
     project_to_idx = {p: i for i, p in enumerate(projects)}
