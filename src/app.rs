@@ -79,11 +79,15 @@ pub fn app() -> Html {
         <main>
             <h1>{ "Project Assignment Solver" }</h1>
             <section>
+                <h2>{ "Step 1: Upload Data" }</h2>
                 <label>{ "Upload CSV: " }</label>
                 <input type="file" accept=".csv" onchange={on_file_change} />
             </section>
             
             if !csv_data.is_empty() {
+                <section style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+                    <h2>{ "Step 2: Map Columns" }</h2>
+                    <p>{ "Please manually map the following fields to the correct columns in your CSV." }</p>
                 <section style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
                     <h2>{ "Column Mapping" }</h2>
                     <div>
