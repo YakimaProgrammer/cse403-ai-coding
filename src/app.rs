@@ -26,15 +26,20 @@ pub fn app() -> Html {
         let csv_data = csv_data.clone();
         let columns = columns.clone();
         Callback::from(move |e: Event| {
+            web_sys::console::log_1(&"File input changed".into());
             let input: HtmlInputElement = e.target_unchecked_into();
             if let Some(files) = input.files() {
+                web_sys::console::log_1(&format!("Files found: {}", files.length()).into());
                 if let Some(file) = files.get(0) {
                     let file = File::from(file);
+                    web_sys::console::log_1(&format!("Processing file: {}", file.name()).into());
                     let csv_data = csv_data.clone();
                     let columns = columns.clone();
                     read_as_text(&file, move |res| {
+                        web_sys::console::log_1(&"read_as_text callback triggered".into());
                         match res {
                             Ok(text) => {
+                                web_sys::console::log_1(&format!("File text read successfully ({} chars)", text.len()).into());
                                 match parse_csv(&text) {
                                     Ok((headers, data)) => {
                                         web_sys::console::log_1(&"CSV parsed successfully".into());
