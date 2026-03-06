@@ -233,7 +233,7 @@ mod tests {
     #[test]
     fn test_full_dataset() {
         let csv_text = include_str!("../backend/GenAI-InputFile - ProjectPreferences.csv");
-        let (headers, data) = crate::csv_parser::parse_csv(csv_text).expect("Should parse CSV");
+        let (_headers, data) = crate::csv_parser::parse_csv(csv_text).expect("Should parse CSV");
 
         let config = SolverConfig {
             name_col: "Name".to_string(),
@@ -251,7 +251,7 @@ mod tests {
                 "Team Member #2 UW NetID".to_string(),
                 "Team Member #3 UW NetID".to_string(),
             ],
-            min_team_size: 2,
+            min_team_size: 4,
             max_team_size: 6,
             weights: vec![0.0, 5.0, 15.0, 30.0, 50.0],
             unlisted_penalty: 100.0,
