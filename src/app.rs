@@ -51,7 +51,7 @@ pub fn app() -> Html {
                         result.set(res);
                         is_solving.set(false);
                     })
-                    .spawn("./worker.js")
+                    .spawn("/worker.js")
             },
         )
     };
