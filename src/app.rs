@@ -3,7 +3,7 @@ use gloo_file::File;
 use gloo_file::futures::read_as_text;
 use web_sys::HtmlInputElement;
 use std::collections::HashMap;
-use gloo_worker::{Spawnable, Worker, WorkerBridge};
+use gloo_worker::{Spawnable, Worker};
 use serde::{Deserialize, Serialize};
 
 use crate::solver::{solve, SolverConfig};
@@ -43,14 +43,17 @@ pub fn app() -> Html {
     let worker_bridge = {
         let result = result.clone();
         let is_solving = is_solving.clone();
-        use_memo(|_| {
-            SolverWorker::spawner()
-                .callback(move |res| {
-                    result.set(res);
-                    is_solving.set(false);
-                })
-                .spawn("./worker.js")
-        }, ())
+        use_memo(
+            move |_| {
+                SolverWorker::spawner()
+                    .callback(move |res| {
+                        result.set(res);
+                        is_solving.set(false);
+                    })
+                    .spawn("./worker.js")
+            },
+            (),
+        )
     };
 
     // Configuration State
