@@ -147,7 +147,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    let mut model = vars.minimise(objective).using(good_lp::microlp);
+    let mut model = vars.minimise(objective).using(good_lp::clarabel);
     for c in constraints {
         model = model.with(c);
     }
