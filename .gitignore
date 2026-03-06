@@ -1,3 +1,2 @@
 .aider*
-env/
-backend/__pycache__
+target/
