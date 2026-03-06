@@ -152,3 +152,81 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_config() -> SolverConfig {
+        SolverConfig {
+            name_col: "Name".to_string(),
+            netid_col: "NetID".to_string(),
+            pitcher_col: "Project Pitched".to_string(),
+            preference_cols: vec![
+                "Choice 1".to_string(),
+                "Choice 2".to_string(),
+            ],
+            teammate_cols: vec!["Teammate".to_string()],
+            min_team_size: 2,
+            max_team_size: 3,
+            weights: vec![0.0, 10.0],
+            unlisted_penalty: 100.0,
+            teammate_penalty: 50.0,
+        }
+    }
+
+    #[test]
+    fn test_basic_assignment() {
+        let config = create_test_config();
+        let mut data = Vec::new();
+        
+        let students = vec![
+            ("S1", "n1", "P1", "P2"),
+            ("S2", "n2", "P1", "P2"),
+            ("S3", "n3", "P2", "P1"),
+            ("S4", "n4", "P2", "P1"),
+        ];
+
+        for (name, id, c1, c2) in students {
+            let mut row = HashMap::new();
+            row.insert("Name".to_string(), name.to_string());
+            row.insert("NetID".to_string(), id.to_string());
+            row.insert("Choice 1".to_string(), c1.to_string());
+            row.insert("Choice 2".to_string(), c2.to_string());
+            data.push(row);
+        }
+
+        let result = solve(&config, &data).expect("Should find a solution");
+        assert_eq!(result.len(), 2);
+        assert!(result.contains_key("P1"));
+        assert!(result.contains_key("P2"));
+        assert_eq!(result.get("P1").unwrap().len(), 2);
+        assert_eq!(result.get("P2").unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_pitcher_constraint() {
+        let mut config = create_test_config();
+        config.min_team_size = 2;
+        
+        let mut data = Vec::new();
+        // S1 pitches P1. P1 MUST be active and S1 MUST be in it.
+        let mut row1 = HashMap::new();
+        row1.insert("Name".to_string(), "S1".to_string());
+        row1.insert("NetID".to_string(), "n1".to_string());
+        row1.insert("Project Pitched".to_string(), "P1".to_string());
+        row1.insert("Choice 1".to_string(), "P1".to_string());
+        data.push(row1);
+
+        let mut row2 = HashMap::new();
+        row2.insert("Name".to_string(), "S2".to_string());
+        row2.insert("NetID".to_string(), "n2".to_string());
+        row2.insert("Choice 1".to_string(), "P1".to_string());
+        data.push(row2);
+
+        let result = solve(&config, &data).expect("Should solve");
+        assert!(result.contains_key("P1"));
+        let members = result.get("P1").unwrap();
+        assert!(members.contains(&"S1".to_string()));
+    }
+}
