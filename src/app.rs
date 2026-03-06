@@ -1,7 +1,6 @@
 use yew::prelude::*;
 use gloo_file::File;
 use gloo_file::futures::read_as_text;
-use futures::future::FutureExt;
 use web_sys::HtmlInputElement;
 use std::collections::HashMap;
 
