@@ -130,7 +130,7 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
     }
 
     // 5. Solve and Format
-    if let Ok(solution) = problem.minimise(objective).using(good_lp::minilp).solve() {
+    if let Ok(solution) = problem.minimise(objective).using(good_lp::microlp).solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
