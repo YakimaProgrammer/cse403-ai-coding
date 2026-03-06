@@ -106,8 +106,31 @@ pub fn solve(config: &SolverConfig, raw_data: &[HashMap<String, String>]) -> Opt
         }
     }
 
+    // Teammate Penalties
+    let netid_to_idx: HashMap<String, usize> = students.iter().enumerate()
+        .map(|(i, s)| (s.netid.clone(), i))
+        .collect();
+
+    for (s_idx, student) in students.iter().enumerate() {
+        for t_netid in &student.teammates {
+            if let Some(&t_idx) = netid_to_idx.get(t_netid) {
+                if s_idx < t_idx {
+                    for p in 0..num_projects {
+                        let z = vars.add(variable().binary());
+                        // z >= x[s][p] - x[t][p]
+                        problem = problem.using(constraint!(z >= x[s_idx][p] - x[t_idx][p]));
+                        // z >= x[t][p] - x[s][p]
+                        problem = problem.using(constraint!(z >= x[t_idx][p] - x[s_idx][p]));
+                        
+                        objective += z * config.teammate_penalty;
+                    }
+                }
+            }
+        }
+    }
+
     // 5. Solve and Format
-    if let Ok(solution) = problem.using(good_lp::minilp).solve() {
+    if let Ok(solution) = problem.minimise(objective).using(good_lp::minilp).solve() {
         let mut result = HashMap::new();
         for p in 0..num_projects {
             if solution.value(y[p]) > 0.5 {
