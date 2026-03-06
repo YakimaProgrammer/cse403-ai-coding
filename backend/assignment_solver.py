@@ -53,6 +53,9 @@ def solve_assignments_from_list(rows):
     for s in range(num_students):
         solver.Add(sum(x[s][p] for p in range(num_projects)) == 1)
 
+    # Objective initialization
+    obj_terms = []
+
     # Constraints: Team Capacity
     for p in range(num_projects):
         team_size = sum(x[s][p] for s in range(num_students))
@@ -72,11 +75,9 @@ def solve_assignments_from_list(rows):
                 p_idx = project_to_idx[p_name]
                 solver.Add(x[s_idx][p_idx] == y[p_idx])
 
-    # Objective
+    # Objective weights
     weights = [0, 5, 15, 30, 50]
     unlisted_penalty = 200
-    teammate_penalty_weight = 50
-    obj_terms = []
 
     for s_idx, student in enumerate(students):
         for p_idx, p_name in enumerate(projects):
