@@ -3,15 +3,55 @@ use gloo_file::File;
 use gloo_file::futures::read_as_text;
 use web_sys::HtmlInputElement;
 use std::collections::HashMap;
+use gloo_worker::{Spawnable, Worker, WorkerBridge};
+use serde::{Deserialize, Serialize};
 
 use crate::solver::{solve, SolverConfig};
 use crate::csv_parser::parse_csv;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SolverInput {
+    pub config: SolverConfig,
+    pub csv_data: Vec<HashMap<String, String>>,
+}
+
+pub struct SolverWorker;
+impl Worker for SolverWorker {
+    type Input = SolverInput;
+    type Message = ();
+    type Output = Option<HashMap<String, Vec<String>>>;
+
+    fn create(_scope: &gloo_worker::WorkerScope<Self>) -> Self {
+        Self
+    }
+
+    fn update(&mut self, _scope: &gloo_worker::WorkerScope<Self>, _msg: Self::Message) {}
+
+    fn received(&mut self, scope: &gloo_worker::WorkerScope<Self>, msg: Self::Input, id: gloo_worker::HandlerId) {
+        let result = solve(&msg.config, &msg.csv_data);
+        scope.respond(id, result);
+    }
+}
 
 #[function_component(App)]
 pub fn app() -> Html {
     let csv_data = use_state(|| Vec::<HashMap<String, String>>::new());
     let columns = use_state(|| Vec::<String>::new());
     let result = use_state(|| None::<HashMap<String, Vec<String>>>);
+    let is_solving = use_state(|| false);
+
+    let worker_bridge = {
+        let result = result.clone();
+        let is_solving = is_solving.clone();
+        use_memo(|_| {
+            SolverWorker::spawner()
+                .callback(move |res| {
+                    result.set(res);
+                    is_solving.set(false);
+                })
+                .spawn("./worker.js")
+        }, ())
+    };
 
     // Configuration State
     let name_col = use_state(|| "".to_string());
@@ -59,7 +99,6 @@ pub fn app() -> Html {
 
     let on_solve = {
         let csv_data = csv_data.clone();
-        let result = result.clone();
         let name_col = name_col.clone();
         let netid_col = netid_col.clone();
         let pitcher_col = pitcher_col.clone();
@@ -67,8 +106,11 @@ pub fn app() -> Html {
         let teammate_cols = teammate_cols.clone();
         let min_size = min_size.clone();
         let max_size = max_size.clone();
+        let is_solving = is_solving.clone();
+        let worker_bridge = worker_bridge.clone();
 
         Callback::from(move |_| {
+            is_solving.set(true);
             let config = SolverConfig {
                 name_col: (*name_col).clone(),
                 netid_col: (*netid_col).clone(),
@@ -82,8 +124,10 @@ pub fn app() -> Html {
                 teammate_penalty: 50.0,
             };
 
-            let solve_result = solve(&config, &csv_data);
-            result.set(solve_result);
+            worker_bridge.send(SolverInput {
+                config,
+                csv_data: (*csv_data).clone(),
+            });
         })
     };
 
@@ -169,7 +213,9 @@ pub fn app() -> Html {
                     <input type="number" value={max_size.to_string()} onchange={let max_size = max_size.clone(); Callback::from(move |e: Event| max_size.set(e.target_unchecked_into::<HtmlInputElement>().value().parse().unwrap_or(6)))} />
 
                     <div style="margin-top: 20px;">
-                        <button onclick={on_solve}>{ "Solve Assignments" }</button>
+                        <button onclick={on_solve} disabled={*is_solving}>
+                            { if *is_solving { "Solving..." } else { "Solve Assignments" } }
+                        </button>
                     </div>
                 </section>
             }
