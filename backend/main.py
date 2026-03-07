@@ -71,7 +71,9 @@ BASE_PATH = os.getenv("API_BASE_PATH", "")
 
 # Serve static files if they exist (built by Docker)
 if os.path.exists("./static_build"):
-    app.mount(BASE_PATH + "/" if BASE_PATH else "/", StaticFiles(directory="./static_build", html=True), name="static")
+    # Ensure BASE_PATH starts with / but doesn't end with / for the mount point if it's the root
+    mount_path = BASE_PATH if BASE_PATH else "/"
+    app.mount(mount_path, StaticFiles(directory="./static_build", html=True), name="static")
 
 # Include the router with the prefix
 app.include_router(router, prefix=BASE_PATH)
