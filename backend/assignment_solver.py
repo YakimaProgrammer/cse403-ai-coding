@@ -101,11 +101,86 @@ def solve_assignments_from_list(rows):
 
     status = solver.Solve()
 
-    if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-        results = {}
-        for p_idx, p_name in enumerate(projects):
-            if y[p_idx].solution_value() > 0.5:
-                results[p_name] = [students[s_idx]['name'] for s_idx in range(num_students) if x[s_idx][p_idx].solution_value() > 0.5]
-        return results
+    if status == pywraplp.Solver.OPTIMAL:
+        return _build_results(students, projects, x, y, num_students, num_projects, 'OPTIMAL')
+    elif status == pywraplp.Solver.FEASIBLE:
+        return _build_results(students, projects, x, y, num_students, num_projects, 'FEASIBLE')
     else:
         return None
+
+
+def _build_results(students, projects, x, y, num_students, num_projects, solver_status):
+    """Build enriched results with team assignments, metrics, and student details."""
+    netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
+
+    # Build team assignments
+    teams = {}
+    student_assignments = {}  # s_idx -> p_idx
+    for p_idx, p_name in enumerate(projects):
+        if y[p_idx].solution_value() > 0.5:
+            members = []
+            for s_idx in range(num_students):
+                if x[s_idx][p_idx].solution_value() > 0.5:
+                    members.append(students[s_idx]['name'])
+                    student_assignments[s_idx] = p_idx
+            if members:
+                teams[p_name] = members
+
+    # Per-student details and choice distribution
+    choice_distribution = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "unlisted": 0}
+    student_details = []
+
+    for s_idx, student in enumerate(students):
+        assigned_p_idx = student_assignments.get(s_idx)
+        if assigned_p_idx is None:
+            continue
+        assigned_project = projects[assigned_p_idx]
+
+        # Determine choice rank
+        if assigned_project in student['choices']:
+            rank = student['choices'].index(assigned_project) + 1
+            choice_distribution[str(rank)] += 1
+        else:
+            rank = 6
+            choice_distribution["unlisted"] += 1
+
+        # Check teammate satisfaction
+        has_teammate = any(
+            student_assignments.get(netid_to_idx[t]) == assigned_p_idx
+            for t in student['teammates']
+            if t in netid_to_idx
+        )
+
+        student_details.append({
+            'name': student['name'],
+            'netid': student['netid'],
+            'assigned_project': assigned_project,
+            'choice_rank': rank,
+            'has_preferred_teammate': has_teammate,
+        })
+
+    # Teammate satisfaction stats
+    total_with_prefs = sum(1 for s in students if len(s['teammates']) > 0)
+    satisfied_with_prefs = sum(
+        1 for sd in student_details
+        if sd['has_preferred_teammate'] and
+        len(students[netid_to_idx[sd['netid']]]['teammates']) > 0
+    )
+
+    team_sizes = {name: len(members) for name, members in teams.items()}
+
+    return {
+        'teams': teams,
+        'metrics': {
+            'choice_distribution': choice_distribution,
+            'teammate_satisfaction': {
+                'total_with_preferences': total_with_prefs,
+                'satisfied': satisfied_with_prefs,
+                'percentage': round(satisfied_with_prefs / total_with_prefs * 100, 1) if total_with_prefs > 0 else 0,
+            },
+            'team_sizes': team_sizes,
+            'num_teams': len(teams),
+            'solver_status': solver_status,
+        },
+        'student_details': student_details,
+    }
