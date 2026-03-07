@@ -1,11 +1,14 @@
 import io
 import csv
 import json
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+import os
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from assignment_solver import solve_assignments_from_list
 
 app = FastAPI(title="CSE403 Team Assignment Solver")
+router = APIRouter()
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,12 +26,12 @@ REQUIRED_COLUMNS = [
 ]
 
 
-@app.get("/health")
+@router.get("/health")
 async def health():
     return {"status": "ok"}
 
 
-@app.post("/solve")
+@router.post("/solve")
 async def solve_teams(file: UploadFile = File(...), options: str = Form("{}")):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV.")
@@ -62,3 +65,13 @@ async def solve_teams(file: UploadFile = File(...), options: str = Form("{}")):
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=f"Internal error processing file: {str(e)}")
+
+# Determine base path from environment variable
+BASE_PATH = os.getenv("API_BASE_PATH", "")
+
+# Include the router with the prefix
+app.include_router(router, prefix=BASE_PATH)
+
+# Serve static files if they exist (built by Docker)
+if os.path.exists("./static_build"):
+    app.mount(BASE_PATH or "/", StaticFiles(directory="./static_build", html=True), name="static")

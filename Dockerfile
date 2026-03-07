@@ -23,6 +23,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 
+# Accept API_BASE_PATH as a build argument or runtime environment variable
+ARG API_BASE_PATH
+ENV API_BASE_PATH=${API_BASE_PATH:-}
+
 # Copy built frontend assets from builder stage
 # These will be in /app/dist inside the container
 COPY --from=frontend-builder /app/frontend/dist ./static_build
