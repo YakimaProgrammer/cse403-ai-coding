@@ -4,8 +4,8 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
-ARG VITE_API_URL
-ENV VITE_API_URL=${VITE_API_URL:-http://127.0.0.1:8000}
+ARG API_BASE_PATH
+ENV VITE_API_BASE_PATH=${API_BASE_PATH:-}
 RUN npm run build
 
 # Final Stage for Backend

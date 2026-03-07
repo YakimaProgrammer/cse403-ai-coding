@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+const BASE_PATH = import.meta.env.VITE_API_BASE_PATH || ''
+const API_URL = BASE_PATH ? `${window.location.origin}${BASE_PATH}` : 'http://127.0.0.1:8000'
 
 function App() {
   const [file, setFile] = useState(null)
