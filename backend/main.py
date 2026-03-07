@@ -69,11 +69,11 @@ async def solve_teams(file: UploadFile = File(...), options: str = Form("{}")):
 # Determine base path from environment variable
 BASE_PATH = os.getenv("API_BASE_PATH", "")
 
+# Include the router with the prefix first so it takes precedence over static files
+app.include_router(router, prefix=BASE_PATH)
+
 # Serve static files if they exist (built by Docker)
 if os.path.exists("./static_build"):
     # Ensure BASE_PATH starts with / but doesn't end with / for the mount point if it's the root
     mount_path = BASE_PATH if BASE_PATH else "/"
     app.mount(mount_path, StaticFiles(directory="./static_build", html=True), name="static")
-
-# Include the router with the prefix
-app.include_router(router, prefix=BASE_PATH)
