@@ -64,10 +64,22 @@ def solve_assignments_from_list(rows):
         solver.Add(team_size <= 6 * y[p])
         solver.Add(team_size >= 4 * y[p])
         
-        # Preference for size 6: small negative weight (reward) for size 6
+        # Team Size Penalties/Rewards
         is_size_6 = solver.BoolVar(f'is_size_6_{p}')
-        solver.Add(team_size >= 6 * is_size_6)
+        is_size_5 = solver.BoolVar(f'is_size_5_{p}')
+        is_size_4 = solver.BoolVar(f'is_size_4_{p}')
+
+        # Ensure exactly one size variable is true if the project is active
+        solver.Add(is_size_6 + is_size_5 + is_size_4 == y[p])
+        
+        # Link size variables to actual team_size
+        solver.Add(team_size >= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4)
+        solver.Add(team_size <= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4 + 6 * (1 - y[p]))
+
+        # Penalties: 6 (reward -1), 5 (penalty 25), 4 (penalty 50)
         obj_terms.append(is_size_6 * -1)
+        obj_terms.append(is_size_5 * 25)
+        obj_terms.append(is_size_4 * 50)
 
     # Constraints: Pitcher Requirement
     for s_idx, student in enumerate(students):
