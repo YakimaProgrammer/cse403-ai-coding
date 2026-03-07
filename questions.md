@@ -5,7 +5,7 @@ Magnus Fulton (mjfulton)
 Ezra Amerga (ezra27)  
 
 ## 2. Which GenAI assistant(s) did you use, and how did you use it to complete your task?
-Magnus used `gemini-3-flash-preview` via the [`aider`](https://aider.chat/) command line tool. I used in a couple of ways.
+Magnus: I used `gemini-3-flash-preview` via the [`aider`](https://aider.chat/) command line tool. I used it in a couple of ways.
 First, I would prompt the model with high level thoughts and tool specifications:
 
 > Let's solve a fun problem with Python's ortools!  
@@ -86,7 +86,8 @@ Here is the model's response:
 >     *   Output a mapping of Project Names to lists of Student Names/NetIDs.
 
 Here, I didn't bother going any more in-depth into the design or architecture because ultimately we were writing a single function exposed to the internet via FastAPI. You can see that I started smaller and told the model to just focus on the linear programming side of the problem.  
-I also used `aider`/`Gemini` to implement new features as well:
+I also used `aider`/`Gemini` to implement new features as well:  
+
 > Could we even make the team sizes be a tunable parameter? For example - allowing groups of up to N and mins of K?  
 
 > ```javascript
@@ -157,7 +158,8 @@ I also used `aider`/`Gemini` to implement new features as well:
 > >>>>>>> REPLACE
 > ```
 
-I also had some back and forth with the model while verifying code output and doing bug fixes:
+I also had some back and forth with the model while verifying code output and doing bug fixes:  
+
 > Close! We should be able to assign penalties for all group sizes, no matter what sizes we allow.
 
 > I will refactor the team size penalty logic in both the frontend and backend to support arbitrary team sizes. Instead of hardcoded size variables, the backend will now iterate from `minSize` to `maxSize` and apply penalties from a provided mapping, and the frontend will allow users to define these penalties dynamically.
