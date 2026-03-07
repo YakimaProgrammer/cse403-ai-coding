@@ -7,6 +7,8 @@ def solve_assignments(csv_file_path):
         return solve_assignments_from_list(list(reader))
 
 def solve_assignments_from_list(rows):
+    # Strip whitespace from keys and values
+    rows = [{k.strip(): v.strip() if isinstance(v, str) else v for k, v in row.items()} for row in rows]
     students = []
     projects_set = set()
     
@@ -87,15 +89,18 @@ def solve_assignments_from_list(rows):
             else:
                 obj_terms.append(x[s_idx][p_idx] * unlisted_penalty)
 
-    # Teammate Requirement: If a student lists teammates, they must be with at least one.
+    # Teammate Requirement: Penalize for each teammate preference not honored
+    teammate_penalty = 50
     netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
     for s_idx, student in enumerate(students):
-        valid_teammate_indices = [netid_to_idx[t] for t in student['teammates'] if t in netid_to_idx and netid_to_idx[t] != s_idx]
-        if valid_teammate_indices:
+        valid_mates = [netid_to_idx[t] for t in student['teammates'] if t in netid_to_idx and netid_to_idx[t] != s_idx]
+        if valid_mates:
+            # Soft constraint: penalize if not with ANY preferred teammate
+            is_alone = solver.BoolVar(f'alone_{s_idx}')
             for p_idx in range(num_projects):
-                # x[s][p] <= sum(x[t][p] for t in teammates)
-                # If student s is on project p, at least one teammate t must also be on project p.
-                solver.Add(x[s_idx][p_idx] <= sum(x[t_idx][p_idx] for t_idx in valid_teammate_indices))
+                # if x[s][p] and sum(x[t][p]) == 0, then is_alone must be 1
+                solver.Add(is_alone >= x[s_idx][p_idx] - sum(x[t_idx][p_idx] for t_idx in valid_mates))
+            obj_terms.append(is_alone * teammate_penalty)
 
     solver.Minimize(solver.Sum(obj_terms))
 
