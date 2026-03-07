@@ -60,10 +60,13 @@ def solve_assignments_from_list(rows, options=None):
     obj_terms = []
 
     # Constraints: Team Capacity
+    min_team_size = options.get('minSize', 4)
+    max_team_size = options.get('maxSize', 6)
+
     for p in range(num_projects):
         team_size = sum(x[s][p] for s in range(num_students))
-        solver.Add(team_size <= 6 * y[p])
-        solver.Add(team_size >= 4 * y[p])
+        solver.Add(team_size <= max_team_size * y[p])
+        solver.Add(team_size >= min_team_size * y[p])
         
         # Team Size Penalties/Rewards
         is_size_6 = solver.BoolVar(f'is_size_6_{p}')
@@ -75,7 +78,7 @@ def solve_assignments_from_list(rows, options=None):
         
         # Link size variables to actual team_size
         solver.Add(team_size >= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4)
-        solver.Add(team_size <= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4 + 6 * (1 - y[p]))
+        solver.Add(team_size <= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4 + max_team_size * (1 - y[p]))
 
         # Penalties: Customizable via options
         obj_terms.append(is_size_6 * options.get('size6', -1))

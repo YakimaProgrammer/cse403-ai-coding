@@ -11,7 +11,8 @@ function App() {
   const [options, setOptions] = useState({
     w1: 0, w2: 5, w3: 15, w4: 30, w5: 50,
     unlisted: 200, teammate: 50,
-    size6: -1, size5: 25, size4: 50
+    size6: -1, size5: 25, size4: 50,
+    minSize: 4, maxSize: 6
   })
 
   const handleOptionChange = (e) => {
@@ -73,7 +74,11 @@ function App() {
               <label>N/A: <input type="number" name="unlisted" value={options.unlisted} onChange={handleOptionChange} /></label>
             </div>
             <div className="option-group">
-              <h4>Team Size Penaltes</h4>
+              <h4>Team Size Constraints</h4>
+              <label>Min Size: <input type="number" name="minSize" value={options.minSize} onChange={handleOptionChange} /></label>
+              <label>Max Size: <input type="number" name="maxSize" value={options.maxSize} onChange={handleOptionChange} /></label>
+              <hr />
+              <h4>Team Size Penalties</h4>
               <label>Size 6: <input type="number" name="size6" value={options.size6} onChange={handleOptionChange} /></label>
               <label>Size 5: <input type="number" name="size5" value={options.size5} onChange={handleOptionChange} /></label>
               <label>Size 4: <input type="number" name="size4" value={options.size4} onChange={handleOptionChange} /></label>
