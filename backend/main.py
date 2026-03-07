@@ -1,6 +1,7 @@
 import io
 import csv
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import json
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from assignment_solver import solve_assignments_from_list
 
@@ -28,7 +29,7 @@ async def health():
 
 
 @app.post("/solve")
-async def solve_teams(file: UploadFile = File(...)):
+async def solve_teams(file: UploadFile = File(...), options: str = Form("{}")):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV.")
 
@@ -45,7 +46,12 @@ async def solve_teams(file: UploadFile = File(...)):
         if not rows:
             raise HTTPException(status_code=400, detail="CSV is empty.")
 
-        result = solve_assignments_from_list(rows)
+        try:
+            parsed_options = json.loads(options)
+        except:
+            parsed_options = {}
+
+        result = solve_assignments_from_list(rows, parsed_options)
 
         if result is None:
             raise HTTPException(status_code=422, detail="No feasible solution found with given constraints.")

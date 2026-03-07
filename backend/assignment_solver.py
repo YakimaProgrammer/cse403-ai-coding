@@ -6,7 +6,8 @@ def solve_assignments(csv_file_path):
         reader = csv.DictReader(f)
         return solve_assignments_from_list(list(reader))
 
-def solve_assignments_from_list(rows):
+def solve_assignments_from_list(rows, options=None):
+    if options is None: options = {}
     # Strip whitespace from keys and values
     rows = [{k.strip(): v.strip() if isinstance(v, str) else v for k, v in row.items()} for row in rows]
     students = []
@@ -76,10 +77,10 @@ def solve_assignments_from_list(rows):
         solver.Add(team_size >= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4)
         solver.Add(team_size <= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4 + 6 * (1 - y[p]))
 
-        # Penalties: 6 (reward -1), 5 (penalty 25), 4 (penalty 50)
-        obj_terms.append(is_size_6 * -1)
-        obj_terms.append(is_size_5 * 25)
-        obj_terms.append(is_size_4 * 50)
+        # Penalties: Customizable via options
+        obj_terms.append(is_size_6 * options.get('size6', -1))
+        obj_terms.append(is_size_5 * options.get('size5', 25))
+        obj_terms.append(is_size_4 * options.get('size4', 50))
 
     # Constraints: Pitcher Requirement
     for s_idx, student in enumerate(students):
@@ -90,8 +91,14 @@ def solve_assignments_from_list(rows):
                 solver.Add(x[s_idx][p_idx] == y[p_idx])
 
     # Objective weights
-    weights = [0, 5, 15, 30, 50]
-    unlisted_penalty = 200
+    weights = [
+        options.get('w1', 0),
+        options.get('w2', 5),
+        options.get('w3', 15),
+        options.get('w4', 30),
+        options.get('w5', 50)
+    ]
+    unlisted_penalty = options.get('unlisted', 200)
 
     for s_idx, student in enumerate(students):
         for p_idx, p_name in enumerate(projects):
@@ -102,7 +109,7 @@ def solve_assignments_from_list(rows):
                 obj_terms.append(x[s_idx][p_idx] * unlisted_penalty)
 
     # Teammate Requirement: Penalize for each teammate preference not honored
-    teammate_penalty = 50
+    teammate_penalty = options.get('teammate', 50)
     netid_to_idx = {s['netid']: i for i, s in enumerate(students)}
     for s_idx, student in enumerate(students):
         valid_mates = [netid_to_idx[t] for t in student['teammates'] if t in netid_to_idx and netid_to_idx[t] != s_idx]

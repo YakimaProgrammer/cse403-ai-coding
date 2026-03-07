@@ -65,6 +65,29 @@ h2 {
   cursor: not-allowed;
 }
 
+.btn-secondary {
+  background: none;
+  border: 1px solid #3498db;
+  color: #3498db;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.options-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #ddd;
+  text-align: left;
+}
+
+.option-group h4 { margin-bottom: 0.5rem; color: #2c3e50; }
+.option-group label { display: block; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.option-group input { width: 60px; float: right; margin-left: 10px; }
+
 /* === Loading === */
 .loading {
   text-align: center;
