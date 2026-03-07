@@ -68,22 +68,24 @@ def solve_assignments_from_list(rows, options=None):
         solver.Add(team_size <= max_team_size * y[p])
         solver.Add(team_size >= min_team_size * y[p])
         
-        # Team Size Penalties/Rewards
-        is_size_6 = solver.BoolVar(f'is_size_6_{p}')
-        is_size_5 = solver.BoolVar(f'is_size_5_{p}')
-        is_size_4 = solver.BoolVar(f'is_size_4_{p}')
+        # Team Size Penalties/Rewards for all valid sizes
+        size_vars = []
+        size_penalties = options.get('sizePenalties', {})
+        
+        for size in range(min_team_size, max_team_size + 1):
+            is_size_k = solver.BoolVar(f'is_size_{size}_{p}')
+            size_vars.append((size, is_size_k))
+            
+            penalty = size_penalties.get(str(size), 0)
+            obj_terms.append(is_size_k * penalty)
 
         # Ensure exactly one size variable is true if the project is active
-        solver.Add(is_size_6 + is_size_5 + is_size_4 == y[p])
+        solver.Add(sum(v for _, v in size_vars) == y[p])
         
         # Link size variables to actual team_size
-        solver.Add(team_size >= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4)
-        solver.Add(team_size <= 6 * is_size_6 + 5 * is_size_5 + 4 * is_size_4 + max_team_size * (1 - y[p]))
-
-        # Penalties: Customizable via options
-        obj_terms.append(is_size_6 * options.get('size6', -1))
-        obj_terms.append(is_size_5 * options.get('size5', 25))
-        obj_terms.append(is_size_4 * options.get('size4', 50))
+        actual_size_expr = sum(size * v for size, v in size_vars)
+        solver.Add(team_size >= actual_size_expr)
+        solver.Add(team_size <= actual_size_expr + max_team_size * (1 - y[p]))
 
     # Constraints: Pitcher Requirement
     for s_idx, student in enumerate(students):

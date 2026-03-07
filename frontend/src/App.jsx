@@ -11,12 +11,21 @@ function App() {
   const [options, setOptions] = useState({
     w1: 0, w2: 5, w3: 15, w4: 30, w5: 50,
     unlisted: 200, teammate: 50,
-    size6: -1, size5: 25, size4: 50,
+    sizePenalties: { 4: 50, 5: 25, 6: -1 },
     minSize: 4, maxSize: 6
   })
 
   const handleOptionChange = (e) => {
-    setOptions({ ...options, [e.target.name]: parseInt(e.target.value) || 0 })
+    const { name, value } = e.target
+    if (name.startsWith('sizeP-')) {
+      const size = name.split('-')[1]
+      setOptions({
+        ...options,
+        sizePenalties: { ...options.sizePenalties, [size]: parseInt(value) || 0 }
+      })
+    } else {
+      setOptions({ ...options, [name]: parseInt(value) || 0 })
+    }
   }
 
   const handleSubmit = async () => {
@@ -79,9 +88,17 @@ function App() {
               <label>Max Size: <input type="number" name="maxSize" value={options.maxSize} onChange={handleOptionChange} /></label>
               <hr />
               <h4>Team Size Penalties</h4>
-              <label>Size 6: <input type="number" name="size6" value={options.size6} onChange={handleOptionChange} /></label>
-              <label>Size 5: <input type="number" name="size5" value={options.size5} onChange={handleOptionChange} /></label>
-              <label>Size 4: <input type="number" name="size4" value={options.size4} onChange={handleOptionChange} /></label>
+              {Array.from({ length: options.maxSize - options.minSize + 1 }, (_, i) => options.minSize + i).map(size => (
+                <label key={size}>
+                  Size {size}: 
+                  <input 
+                    type="number" 
+                    name={`sizeP-${size}`} 
+                    value={options.sizePenalties[size] ?? 0} 
+                    onChange={handleOptionChange} 
+                  />
+                </label>
+              ))}
               <hr />
               <label>Teammate Split: <input type="number" name="teammate" value={options.teammate} onChange={handleOptionChange} /></label>
             </div>
